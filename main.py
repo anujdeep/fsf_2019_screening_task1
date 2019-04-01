@@ -2,7 +2,7 @@ from PyQt5 import QtGui
 import os, sys
 import numpy as np
 import pandas as pd
-from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import *
 import matplotlib.pyplot as plt
 from matplotlib import style
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -10,7 +10,7 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 style.use('ggplot')
 
 
-class PrettyWidget(.QtWidgets):
+class PrettyWidget(QWidget):
 
 
     def __init__(self):
@@ -20,10 +20,10 @@ class PrettyWidget(.QtWidgets):
     def initUI(self):
         self.setGeometry(600,300, 1000, 600)
         self.center()
-        self.setWindowTitle('Revision on Plots, Tables and File Browser')
+        self.setWindowTitle('fossee PyQt5 application')
 
         #Grid Layout
-        grid = QtGui.QGridLayout()
+        grid = QGridLayout()
         self.setLayout(grid)
 
         #Canvas and Toolbar
@@ -33,7 +33,7 @@ class PrettyWidget(.QtWidgets):
 
 
         #Import CSV Button
-        btn1 = QtGui.QPushButton('Import CSV', self)
+        btn1 = QPushButton('File', self)
         btn1.resize(btn1.sizeHint())
         btn1.clicked.connect(self.getCSV)
         grid.addWidget(btn1, 1, 0)
@@ -44,16 +44,16 @@ class PrettyWidget(.QtWidgets):
         self.rating_list = []
         self.yq_list = []
 
-        self.comboBox = QtGui.QComboBox(self)
+        self.comboBox = QComboBox(self)
         self.comboBox.addItems(self.rating_list)
         grid.addWidget(self.comboBox, 0, 0)
 
-        self.comboBox2 = QtGui.QComboBox(self)
+        self.comboBox2 = QComboBox(self)
         self.comboBox2.addItems(self.yq_list)
         grid.addWidget(self.comboBox2, 0, 1)
 
         #Plot Button
-        btn2 = QtGui.QPushButton('Plot', self)
+        btn2 = QPushButton('Plot', self)
         btn2.resize(btn2.sizeHint())
         btn2.clicked.connect(self.plot)
         grid.addWidget(btn2, 1, 1)
@@ -103,14 +103,14 @@ class PrettyWidget(.QtWidgets):
 
     def center(self):
         qr = self.frameGeometry()
-        cp = QtGui.QDesktopWidget().availableGeometry().center()
+        cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
 
 
 def main():
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     w = PrettyWidget()
     app.exec_()
 
