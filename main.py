@@ -62,7 +62,7 @@ class PrettyWidget(QWidget):
 
 
     def getCSV(self):
-        filePath = QtGui.QFileDialog.getOpenFileName(self,
+        filePath = QFileDialog.getOpenFileName(self,
                                                     'CSV File',
                                                     '~/Desktop/PyQt4',
                                                     '*.csv')
