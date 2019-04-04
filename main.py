@@ -1,13 +1,24 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Apr  4 01:37:54 2019
+
+@author: User
+"""
+import  sys
+import os
+import csv
+from subprocess import call
+from PyQt5.QtWidgets import *
 from PyQt5 import QtGui
-import os, sys
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import random
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import pyqtSlot
 import numpy as np
 import pandas as pd
-from PyQt5.QtWidgets import *
-import matplotlib.pyplot as plt
-from matplotlib import style
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 
-style.use('ggplot')
 
 
 class PrettyWidget(QWidget):
@@ -18,9 +29,9 @@ class PrettyWidget(QWidget):
         self.initUI()
 
     def initUI(self):
-        self.setGeometry(600,300, 1000, 600)
+        self.setGeometry(600,300, 500, 300)
         self.center()
-        self.setWindowTitle('fossee PyQt5 application')
+        self.setWindowTitle('plotter')
 
         #Grid Layout
         grid = QGridLayout()
@@ -44,13 +55,6 @@ class PrettyWidget(QWidget):
         self.rating_list = []
         self.yq_list = []
 
-        self.comboBox = QComboBox(self)
-        self.comboBox.addItems(self.rating_list)
-        grid.addWidget(self.comboBox, 0, 0)
-
-        self.comboBox2 = QComboBox(self)
-        self.comboBox2.addItems(self.yq_list)
-        grid.addWidget(self.comboBox2, 0, 1)
 
         #Plot Button
         btn2 = QPushButton('Plot', self)
@@ -60,7 +64,7 @@ class PrettyWidget(QWidget):
 
         self.show()
 
-
+    @pyqtSlot()
     def getCSV(self):
         filePath = QFileDialog.getOpenFileName(self,
                                                     'CSV File',
@@ -96,7 +100,7 @@ class PrettyWidget(QWidget):
         ax.plot(p1.ix[:, 2], 'r', label = "Actual PD")
         ax.plot(p1.ix[:, 4], 'y', label = "Long Run Avg")
 
-        ax.set_title('Canada C&I PD Plot')
+        ax.set_title('csv data plotter')
         ax.legend(loc = 0)
         self.canvas.draw()
 
@@ -106,14 +110,105 @@ class PrettyWidget(QWidget):
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+        
+        
+class MyTableWidget(QTableWidget):
+    def __init__(self, r, c):
+        super().__init__(r, c)
+        self.check_change = True
+        self.init_ui()
+
+    def init_ui(self):
+        self.cellChanged.connect(self.c_current)
+        self.show()
+
+    def c_current(self):
+        if self.check_change:
+            row = self.currentRow()
+            col = self.currentColumn()
+            value = self.item(row, col)
+            value = value.text()
+            print("The current cell is ", row, ", ", col)
+            print("In this cell we have: ", value)
+
+    def open_sheet(self):
+        self.check_change = False
+        path = QFileDialog.getOpenFileName(self, 'Open CSV', os.getenv('HOME'), 'CSV(*.csv)')
+        if path[0] != '':
+            with open(path[0], newline='') as csv_file:
+                self.setRowCount(0)
+                self.setColumnCount(10)
+                my_file = csv.reader(csv_file, dialect='excel')
+                for row_data in my_file:
+                    row = self.rowCount()
+                    self.insertRow(row)
+                    if len(row_data) > 10:
+                        self.setColumnCount(len(row_data))
+                    for column, stuff in enumerate(row_data):
+                        item = QTableWidgetItem(stuff)
+                        self.setItem(row, column, item)
+        self.check_change = True
+
+    def save_sheet(self):
+        path = QFileDialog.getSaveFileName(self, 'Save CSV', os.getenv('HOME'), 'CSV(*.csv)')
+        if path[0] != '':
+            with open(path[0], 'w') as csv_file:
+                maker = csv.writer(csv_file, dialect='excel')
+                for row in range(self.rowCount()):
+                    row_data = []
+                    for column in range(self.columnCount()):
+                        item = self.item(row, column)
+                        if item is not None:
+                            row_data.append(item.text())
+                        else:
+                            row_data.append('')
+                    maker.writerow(row_data)
 
 
+class MySheet(QMainWindow):
+    
+    def __init__(self):
+        super().__init__()
 
-def main():
-    app = QApplication(sys.argv)
-    w = PrettyWidget()
-    app.exec_()
-
+        self.form_widget = MyTableWidget(0, 0)
+        self.setCentralWidget(self.form_widget)
+        col1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+        self.form_widget.setHorizontalHeaderLabels(col1)
+        self.setWindowTitle("csv to table")
+        save1 = QAction('&Save', self)
+        save1.setShortcut('Ctrl+S')
+        open1 = QAction('&Load', self)
+        quit1 = QAction('&Quit', self)
+        b = self.menuBar()
+        file = b.addMenu('File')
+        edit=b.addMenu('Edit')
+        plot=b.addMenu('plot')
+        save=b.addMenu('save')
+        exitapp1=b.addMenu('Exit')
+        file.addAction(open1)
+        exitapp1.addAction(quit1)
+        save.addAction(save1)
+        
+        quit1.triggered.connect(self.quit_app)
+        save1.triggered.connect(self.form_widget.save_sheet)
+        open1.triggered.connect(self.form_widget.open_sheet)
+        self.show()
+        
+    def run_myScript(self):
+        call(["python", 'PlotterScipt.py'])
+        QMainWindow.hide()    
+  
+    def quit_app(self):
+        qApp.quit()
 
 if __name__ == '__main__':
-    main()
+    app = QApplication(sys.argv)
+    w = PrettyWidget()
+    ask = MySheet()
+    win = QMainWindow ()
+    win.setCentralWidget (ask)
+    win.setWindowTitle("csv to table")
+    win.resize(600,400)
+    win.show ()
+    sys.exit(app.exec_())
+
